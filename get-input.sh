@@ -6,6 +6,9 @@
 ## To get the cookie, use a browser to sign in, then inspect the headers for a page request.
 
 URL=https://adventofcode.com/2020
-read cookie < .cookie && (
+if [ -e .cookie ]; then
+  read cookie < .cookie
   curl -s -o "input/$1" "${URL}/day/$((10#$1))/input" -X GET -H "Cookie: session=${cookie}"
-)
+else
+  echo "Sign in to ${URL} to get a cookie!"
+fi
