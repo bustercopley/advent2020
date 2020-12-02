@@ -45,16 +45,29 @@ re::match_data re::match(const re::code &re, const std::string &subject,
   return p;
 }
 
-bool re::matched(
+std::pair<bool, std::size_t> re::get_matched(
   const re::match_data &data, int n, const re::source_location &location) {
-
-  if (int rc = pcre2_substring_length_bynumber(&*data, n, nullptr); rc < 0) {
+  std::size_t length;
+  int rc = pcre2_substring_length_bynumber(&*data, n, &length);
+  if (rc < 0) {
     if (rc == PCRE2_ERROR_UNSET) {
-      return false;
+      return {false, 0};
     }
     throw_error(rc, location);
   }
-  return true;
+  return {true, length};
+}
+
+bool re::matched(
+  const re::match_data &data, int n, const re::source_location &location) {
+
+  return re::get_matched(data, n, location).first;
+}
+
+std::size_t re::matched_length(
+  const re::match_data &data, int n, const re::source_location &location) {
+
+  return re::get_matched(data, n, location).second;
 }
 
 std::string re::match_string(

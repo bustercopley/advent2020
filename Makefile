@@ -20,7 +20,7 @@
 DAY=01
 
 ## Some days might need extra source files
-DAY_04_OBJECTS=md5.o
+#DAY_04_OBJECTS=md5.o
 
 ifeq ($(OS),Windows_NT)
 SHELL=cmd

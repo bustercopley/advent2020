@@ -60,7 +60,13 @@ code regex(const char *pattern,
 match_data match(const code &re, const std::string &subject,
   const source_location &location = source_location::current());
 
+std::pair<bool, std::size_t> get_matched(
+  const re::match_data &data, int n, const re::source_location &location);
+
 bool matched(const match_data &data, int n,
+  const source_location &location = source_location::current());
+
+std::size_t matched_length(const match_data &data, int n,
   const source_location &location = source_location::current());
 
 std::string match_string(const match_data &data, int n,
