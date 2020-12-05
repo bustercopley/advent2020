@@ -1,56 +1,37 @@
 #include "precompiled.h"
 
+auto regex = re::regex(R"(^[FBLR]{10}(?::(\d+))?$)");
+
 void parts(std::istream &stream, int part) {
-  auto re = re::regex(R"(^(\w+)(?::(\d+),(\d+),(\d+))?$)");
   bool test = false;
-  int result = 0;
-  std::set<int> set;
+  int min = std::numeric_limits<int>::max();
+  int max = std::numeric_limits<int>::min();
+  int sum = 0;
 
-  std::string line;
-  while (std::getline(stream, line)) {
-    if (auto m = re::match(re, line)) {
-      // read two binary integers from string
-      int row = 0;
-      for (int bit = 1 << 6, i = 0; i != 7; ++i, bit >>= 1) {
-        if (line[i] == 'B') {
-          row += bit;
-        }
-      }
-      int col = 0;
-      for (int bit = 1 << 2, i = 0; i != 3; ++i, bit >>= 1) {
-        if (line[7 + i] == 'R') {
-          col += bit;
-        }
+  for (std::string line; std::getline(stream, line);) {
+    if (auto m = re::match(regex, line)) {
+      // read binary integer from string
+      int id = 0;
+      for (int i = 0; i != 10; ++i) {
+        id = (id << 1) | (line[i] == 'B') | (line[i] == 'R');
       }
 
-      int id = row * 8 + col;
-      set.insert(id);
-      result = std::max(result, id);
+      max = std::max(max, id);
+      min = std::min(min, id);
+      sum += id;
 
-      test = matched(m, 2);
-      if (test && part == 1) {
-        if (row != std::stoi(match_string(m, 2)) ||
-            col != std::stoi(match_string(m, 3)) ||
-            id != std::stoi(match_string(m, 4))) {
-          std::cout << "Fail, " << line << ", got row " << row << " col " << col
-                    << std::endl;
+      if (matched(m, 1)) {
+        test = true;
+        if (part == 1 && id != std::stoi(match_string(m, 1))) {
+          std::cout << "Fail, " << line << ", got id " << id << std::endl;
         }
       }
     }
   }
+
   if (!test) {
-    if (part == 1) {
-      std::cout << result << std::endl;
-    } else {
-      int prev = std::numeric_limits<int>::min();
-      for (auto n : set) {
-        if (n - 1 == prev + 1) {
-          std::cout << n - 1 << std::endl;
-          break;
-        }
-        prev = n;
-      }
-    }
+    int result = part == 1 ? max : (min + max) * (max - min + 1) / 2 - sum;
+    std::cout << result << std::endl;
   }
 }
 
