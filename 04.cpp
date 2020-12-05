@@ -1,6 +1,6 @@
 #include "precompiled.h"
 
-bool valid_year(const std::string &s, int first, int last) {
+bool valid_year(std::string_view s, int first, int last) {
   if (std::size(s) != 4) {
     return false;
   }
@@ -11,14 +11,14 @@ bool valid_year(const std::string &s, int first, int last) {
 }
 
 template <std::size_t N> bool all(bool (&arr)[N]) {
-  return std::accumulate(std::begin(arr), std::end(arr), true,
-    [](bool a, bool b) { return a && b; });
+  return std::accumulate(
+    std::begin(arr), std::end(arr), true, std::logical_and{});
 }
 
 void parts(std::istream &stream, int part) {
   auto re1 = re::regex(R"(^(?:(\d+),(\d+))?$)");
   auto re2 = re::regex(
-    R"(^(?:(byr)|(iyr)|(eyr)|(hgt)|(hcl)|(ecl)|(pid)|cid):(\S+)(?:\s|$))");
+    R"(^(?:(byr)|(iyr)|(eyr)|(hgt)|(hcl)|(ecl)|(pid)|cid):(\S+)(?:\s|$)(.*))");
   re::code field_regex[] = {
     re::regex(R"(^(\d+)(?:(cm)|in)$)"),
     re::regex(R"(^#[0-9a-f]{6}$)"),
@@ -37,8 +37,8 @@ void parts(std::istream &stream, int part) {
       result += all(field_ok);
       if (matched(m, 1)) {
         test = true;
-        int test_part = std::stoi(match_string(m, 1));
-        int expected = std::stoi(match_string(m, 2));
+        int test_part = string_to<int>(match_view(m, 1, line));
+        int expected = string_to<int>(match_view(m, 2, line));
         if (part == test_part && result != expected) {
           std::cout << "Fail, index " << index << ", result " << result
                     << ", expected " << expected << std::endl;
@@ -48,13 +48,14 @@ void parts(std::istream &stream, int part) {
       }
       std::memset(field_ok, '\0', sizeof field_ok);
     } else {
-      while (auto m = match(re2, line)) {
+      std::string_view rest_of_line(line);
+      while (auto m = match(re2, rest_of_line)) {
         for (int i = 0; i != 7; ++i) {
           if (matched(m, i + 1)) {
             if (part == 1) {
               field_ok[i] = true;
             } else {
-              auto value = match_string(m, 8);
+              auto value = match_view(m, 8, rest_of_line);
               switch (i) {
               case 0:
                 field_ok[0] |= valid_year(value, 1920, 2002);
@@ -76,13 +77,13 @@ void parts(std::istream &stream, int part) {
                 break;
               }
               default:
-                field_ok[i] |= !!match(field_regex[i - 3], value);
+                field_ok[i] |= match(field_regex[i - 3], value) != nullptr;
                 break;
               }
             }
           }
         }
-        line.erase(0, matched_length(m, 0));
+        rest_of_line = match_view(m, 9, rest_of_line);
       }
     }
   }
@@ -102,7 +103,7 @@ int main() {
   }
 
   std::cout << "Day 4, Part Two" << std::endl;
-  for (auto filename : {"test/04", "test/04b", "input/04"}) {
+  for (auto filename : {"test/04", "input/04"}) {
     if (std::ifstream stream(filename); stream) {
       parts(stream, 2);
     }

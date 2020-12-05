@@ -6,11 +6,6 @@
 
 // Interface:
 
-// re::code re::regex(const char *pattern);
-// re::match_data re::match(code, const char *subject);
-// bool re::matched(re::match_data, int n);
-// std::string re::match_string(re::match_data match_data, int n);
-
 // Usage:
 
 // void f(std::istream &stream) {
@@ -38,10 +33,15 @@
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
 #include <experimental/source_location>
+#include <memory>
+#include <string>
+#include <string_view>
 
 namespace re {
 
-using std::experimental::source_location;
+#define SRCLOCDEF                                                              \
+  const std::experimental::source_location &location =                         \
+    std::experimental::source_location::current()
 
 struct code_deleter {
   void operator()(pcre2_code *p) { pcre2_code_free(p); }
@@ -54,23 +54,24 @@ struct match_data_deleter {
 using code = std::unique_ptr<pcre2_code, code_deleter>;
 using match_data = std::unique_ptr<pcre2_match_data, match_data_deleter>;
 
-code regex(const char *pattern,
-  const source_location &location = source_location::current());
+code regex(const char *pattern, SRCLOCDEF);
+match_data match(const code &re, const std::string &subject, SRCLOCDEF);
+match_data match(const code &re, std::string_view subject, SRCLOCDEF);
+bool matched(const match_data &data, int n, SRCLOCDEF);
+std::size_t matched_length(const match_data &data, int n, SRCLOCDEF);
+std::string match_string(const match_data &data, int n, SRCLOCDEF);
 
-match_data match(const code &re, const std::string &subject,
-  const source_location &location = source_location::current());
+std::pair<std::size_t, std::size_t> match_bounds(
+  const re::match_data &data, int n, SRCLOCDEF);
 
-std::pair<bool, std::size_t> get_matched(
-  const re::match_data &data, int n, const re::source_location &location);
+std::string_view match_view(
+  const match_data &data, int n, std::string_view subject, SRCLOCDEF);
 
-bool matched(const match_data &data, int n,
-  const source_location &location = source_location::current());
+std::string_view match_view(
+  const match_data &data, int n, const std::string &subject, SRCLOCDEF);
 
-std::size_t matched_length(const match_data &data, int n,
-  const source_location &location = source_location::current());
+#undef SRCLOCDEF
 
-std::string match_string(const match_data &data, int n,
-  const source_location &location = source_location::current());
 } // namespace re
 
 #endif
