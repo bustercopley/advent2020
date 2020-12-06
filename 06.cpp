@@ -1,40 +1,42 @@
 #include "precompiled.h"
 
-auto regex = re::regex(R"(^(?:(\d+),(\d+))?$)");
+auto regex = re::regex(R"(^(?:|([a-z]+)|(\d+),(\d+))$)");
 
 void parts(std::istream &stream, int part) {
   bool test = false;
   int result = 0;
-  int block_size = 0;
-  int block_count = 0;
   int expected = 0;
-  int questions[26] = {};
-  for (std::string line; std::getline(stream, line);) {
+
+  int group_size = 0;
+  int group_result = 0;
+  int questions[26]{};
+  std::string line;
+
+  do {
+    std::getline(stream, line);
     if (auto m = re::match(regex, line)) {
       if (matched(m, 1)) {
+        // normal line
+        ++group_size;
+        for (char c : line) {
+          ++questions[c - 'a'];
+        }
+      } else if (matched(m, 2)) {
+        // expected results (test file only)
         test = true;
-        expected = std::stoi(match_string(m, part));
-        break;
-      }
-      for (auto n : questions) {
-        block_count += (part == 1 ? (n != 0) : (n == block_size));
-      }
-      result += block_count;
-      std::memset(&questions, '\0', sizeof questions);
-      block_size = 0;
-      block_count = 0;
-    } else {
-      ++block_size;
-      for (char c : line) {
-        ++questions[c - 'a'];
+        expected = std::stoi(match_string(m, part == 1 ? 2 : 3));
+      } else {
+        // empty line or end of stream
+        for (auto n : questions) {
+          group_result += n != 0 && (part == 1 || n == group_size);
+        }
+        result += group_result;
+        std::memset(&questions, '\0', sizeof questions);
+        group_size = 0;
+        group_result = 0;
       }
     }
-  }
-
-  for (auto n : questions) {
-    block_count += (part == 1 ? n != 0 : n == block_size);
-  }
-  result += block_count;
+  } while (stream);
 
   if (test) {
     if (result != expected) {
