@@ -14,7 +14,7 @@ void throw_error(int error_number, SRCLOC) {
   std::string throw_error = format_error(error_number);
   std::cerr << location.file_name() << ":" << location.line() << ": "
             << format_error(error_number) << "\n";
-  throw std::runtime_error("Regex throw_error");
+  throw std::runtime_error("Regex error");
 }
 
 re::code re::regex(const char *pattern, SRCLOC) {
