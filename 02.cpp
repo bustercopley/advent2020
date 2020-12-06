@@ -1,13 +1,13 @@
 #include "precompiled.h"
 
+auto regex = re::regex(R"(^(\d+)-(\d+) ([a-z]): ([a-z]+)$|^(\d+),(\d)+$)");
+
 void parts(std::istream &stream, int part) {
-  auto re = re::regex(R"(^(\d+)-(\d+) ([a-z]): ([a-z]+)$|^(\d+),(\d)+$)");
   bool test = false;
   int result = 0, expected = -1;
 
-  std::string line;
-  while (std::getline(stream, line)) {
-    if (auto m = re::match(re, line)) {
+  for (std::string line; std::getline(stream, line);) {
+    if (auto m = match(regex, line)) {
       if (matched(m, 1)) {
         int low = std::stoi(match_string(m, 1));
         int high = std::stoi(match_string(m, 2));
@@ -17,8 +17,7 @@ void parts(std::istream &stream, int part) {
         if (part == 1) {
           int n = std::count(std::begin(pw), std::end(pw), c);
           result += low <= n && n <= high;
-        }
-        else {
+        } else {
           result += (pw[low - 1] == c) + (pw[high - 1] == c) == 1;
         }
       } else {

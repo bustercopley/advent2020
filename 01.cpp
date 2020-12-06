@@ -1,15 +1,15 @@
 #include "precompiled.h"
 
+auto regex = re::regex(R"(^(\d+)(?:,(\d+))?$)");
+
 void parts(std::istream &stream, int part) {
-  auto re = re::regex(R"(^(\d+)(?:,(\d+))?$)");
   bool test = false;
   std::int64_t result = -1, expected = -1;
   std::vector<int> entries;
 
-  std::string line;
-  while (std::getline(stream, line)) {
-    if (auto m = re::match(re, line)) {
-      if (re::matched(m, 2)) {
+  for (std::string line; std::getline(stream, line);) {
+    if (auto m = match(regex, line)) {
+      if (matched(m, 2)) {
         test = true;
         expected = std::stoi(match_string(m, part));
       } else {

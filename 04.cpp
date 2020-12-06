@@ -29,9 +29,8 @@ void parts(std::istream &stream, int part) {
   int result = 0;
   int index = 0;
 
-  std::string line;
   bool field_ok[7];
-  while (std::getline(stream, line)) {
+  for (std::string line; std::getline(stream, line);) {
     if (auto m = match(re1, line)) {
       // blank line (or end of test)
       result += all(field_ok);

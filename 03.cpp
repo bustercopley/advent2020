@@ -5,9 +5,8 @@ void parts(std::istream &stream, int part) {
   bool test = false;
   std::size_t result = 0, expected = -1;
 
-  std::string line;
   std::vector<std::string> v;
-  while (std::getline(stream, line)) {
+  for (std::string line; std::getline(stream, line);) {
     if (auto m = re::match(re, line)) {
       test = true;
       expected = std::stoi(match_string(m, part == 1 ? 1 : 2));
@@ -22,9 +21,8 @@ void parts(std::istream &stream, int part) {
     j = (j + 3) % std::size(s);
   }
 
-  using slopes = std::pair<std::size_t, std::size_t>[];
-
   if (part == 2) {
+    using slopes = std::pair<std::size_t, std::size_t>[];
     for (auto [dx, dy] : slopes{{1, 1}, {5, 1}, {7, 1}, {1, 2}}) {
       std::size_t n = 0;
       for (std::size_t i = 0, j = 0; i < std::size(v); i += dy) {
