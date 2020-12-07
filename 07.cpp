@@ -32,6 +32,8 @@ void parts(std::istream &stream, int part) {
   std::size_t expected = 0;
 
   symbols colors;
+  colors["shiny gold"];
+
   std::vector<std::map<int, std::size_t>> rules;
 
   for (std::string line; std::getline(stream, line);) {
@@ -43,7 +45,11 @@ void parts(std::istream &stream, int part) {
           auto count = string_to<std::size_t>(match_view(m, 1, rest_of_line));
           auto inner_color = colors[match_string(m, 2)];
           rules.resize(std::size(colors));
-          rules[inner_color][outer_color] = count;
+          if (part == 1) {
+            rules[inner_color][outer_color] = count;
+          } else {
+            rules[outer_color][inner_color] = count;
+          }
           rest_of_line = match_view(m, 3, rest_of_line);
         }
       } else {
@@ -54,25 +60,45 @@ void parts(std::istream &stream, int part) {
     }
   }
 
+  std::vector<std::size_t> set(std::size(colors));
   if (part == 1) {
-    std::vector<int> set(std::size(colors));
-    set[colors["shiny gold"]] = 1;
+    set[0] = 1;
     bool done = false;
     while (!done) {
       done = true;
-      result = 0;
-      for (std::size_t i = 0; i != std::size(colors); ++i) {
-        if (auto level = set[i]) {
-          result += level > 1;
-          for (auto pair : rules[i]) {
-            if (!set[pair.first]) {
+      result = -1;
+      for (std::size_t inner = 0; inner != std::size(colors); ++inner) {
+        if (set[inner]) {
+          ++result;
+          for (auto [outer, count] : rules[inner]) {
+            if (!set[outer]) {
               done = false;
-              set[pair.first] = level + 1;
+              set[outer] = 1;
             }
           }
         }
       }
     }
+  } else {
+    while (!set[0]) {
+      for (int outer = 0; outer != (int)std::size(colors); ++outer) {
+        if (!set[outer]) {
+          std::size_t counts_for = 1;
+          bool all_set = true;
+          for (auto [inner, count] : rules[outer]) {
+            if (!set[inner]) {
+              all_set = false;
+            } else {
+              counts_for += count * set[inner];
+            }
+          }
+          if (all_set) {
+            set[outer] = counts_for;
+          }
+        }
+      }
+    }
+    result = set[0] - 1;
   }
 
   if (test) {
@@ -92,5 +118,13 @@ int main() {
       parts(stream, 1);
     }
   }
+
+  std::cout << "Day 7, Part Two" << std::endl;
+  for (auto filename : {"test/07", "test/07b", "input/07"}) {
+    if (std::ifstream stream(filename); stream) {
+      parts(stream, 2);
+    }
+  }
+
   return 0;
 }
