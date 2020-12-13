@@ -70,8 +70,8 @@ void part(std::istream &stream, int part) {
   }
 
   // count nonempty seats
-  for (auto line: grid) {
-    for (auto cell: line) {
+  for (auto line : grid) {
+    for (auto cell : line) {
       result += (cell == '#');
     }
   }

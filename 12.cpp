@@ -44,8 +44,7 @@ void part(std::istream &stream, int part) {
             std::cout << "Parse error" << std::endl;
             return;
           }
-        }
-        else {
+        } else {
           switch (c) {
           case 'N': dy += a; break;
           case 'S': dy -= a; break;

@@ -2,8 +2,8 @@
 #ifndef string_to_h
 #define string_to_h
 
-#include <concepts>
 #include <charconv>
+#include <concepts>
 #include <span>
 #include <string_view>
 

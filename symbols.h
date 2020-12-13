@@ -2,10 +2,10 @@
 #ifndef symbols_h
 #define symbols_h
 
-#include <string>
-#include <vector>
 #include <cstddef>
 #include <map>
+#include <string>
+#include <vector>
 
 struct symbols {
 private:

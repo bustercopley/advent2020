@@ -70,7 +70,7 @@ void parts(std::istream &stream, int part) {
       if (program[i].code != acc) {
         auto &changed_code = program[i].code;
         changed_code = changed_code == jmp ? nop : jmp;
-        auto[halt, accumulator] = run(program, i);
+        auto [halt, accumulator] = run(program, i);
         if (halt) {
           result = accumulator;
           break;
