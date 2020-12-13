@@ -82,7 +82,7 @@ void part(std::istream &stream, int part) {
                 << std::endl;
     }
   } else {
-    std::cout << "Result " << result << std::endl;
+    std::cout << result << std::endl;
   }
 }
 

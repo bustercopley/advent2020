@@ -71,7 +71,7 @@ void part(std::istream &stream, int part) {
       std::exit(1);
     }
   } else {
-    std::cout << "Result " << result << std::endl;
+    std::cout << result << std::endl;
   }
 }
 
