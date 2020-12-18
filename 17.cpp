@@ -3,8 +3,11 @@
 auto regex = re::regex(R"(^(\d+),(\d+)$)");
 
 void inflate(auto &grid, std::size_t size) {
-  grid.reserve(std::size(grid) + 2 * size);
-  if constexpr (requires { grid[0][0]; }) {
+  constexpr bool dimension_ge_2 = requires { grid[0][0]; };
+  constexpr bool dimension_ge_3 = requires { grid[0][0][0]; };
+  std::size_t layers_at_front = (dimension_ge_3 ? 1 : size);
+  grid.reserve(std::size(grid) + size + layers_at_front);
+  if constexpr (dimension_ge_2) {
     for (auto &layer : grid) {
       inflate(layer, size);
     }
@@ -12,7 +15,8 @@ void inflate(auto &grid, std::size_t size) {
   } else {
     grid.push_back('.');
   }
-  grid.insert(std::begin(grid), size, grid.back());
+
+  grid.insert(std::begin(grid), layers_at_front, grid.back());
   grid.insert(std::end(grid), size - 1, grid.back());
 }
 
@@ -31,7 +35,8 @@ auto &subscript(auto &sequence, std::size_t i, auto... j) {
 
 template <typename F> void for_subscripts(auto &grid, F &&f, auto... i) {
   if constexpr (requires { subscript(grid, i...)[0]; }) {
-    for (std::size_t j = 0; j != std::size(subscript(grid, i...)); ++j) {
+    std::size_t size = std::size(subscript(grid, i...));
+    for (std::size_t j = 0; j != size; ++j) {
       for_subscripts(grid, std::forward<F>(f), i..., j);
     }
   } else {
@@ -47,29 +52,52 @@ auto zeroes(const auto &grid) {
   }
 }
 
-void count_neighbours(auto &grid, auto &counts) {
-  if constexpr (requires { grid[0][0]; }) {
+void count_neighbours(const auto &grid, auto &counts) {
+  constexpr bool dimension_ge_2 = requires { grid[0][0]; };
+  constexpr bool dimension_ge_3 = requires { grid[0][0][0]; };
+  if constexpr (dimension_ge_2) {
+    // zero out layer 1 of counts (first interior layer)
+    for_subscripts(counts[1], [](auto &layer, auto...i) {
+      subscript(layer, i...) = 0;
+    });
+    // overwrite layers 2... with counts for layers 1... in the lower dimension
     for (std::size_t i = 1; i != std::size(grid) - 1; ++i) {
       count_neighbours(grid[i], counts[i + 1]);
     }
+    // combine layers to get the counts for this dimension (in correct layer)
     for (std::size_t i = 1; i != std::size(grid) - 1; ++i) {
       auto &a = counts[i];
       const auto &b = counts[i + 1];
       const auto &c = counts[(i + 2) % std::size(grid)];
-      for_subscripts(a, [&b, &c](auto &layer, auto... i) {
-        subscript(layer, i...) += subscript(b, i...) + subscript(c, i...);
+      int fudge = (dimension_ge_3 && i == 1) ? 2 : 1;
+      for_subscripts(a, [&b, &c, fudge](auto &a, auto... i) {
+        subscript(a, i...) += subscript(b, i...) + fudge * subscript(c, i...);
       });
     }
-    auto &last = counts[std::size(counts) - 1];
-    const auto &first = counts[0];
-    for_subscripts(last, [&first](auto &last, auto... i) {
-      subscript(last, i...) = subscript(first, i...);
+    // zero out lower dimension's counts in last layer (no longer needed)
+    for_subscripts(counts[std::size(counts) - 1], [](auto &layer, auto... i) {
+      subscript(layer, i...) = 0;
     });
   } else {
     for (std::size_t i = 1; i != std::size(grid) - 1; ++i) {
       counts[i] =
         (grid[i - 1] == '#') + (grid[i] == '#') + (grid[i + 1] == '#');
     }
+  }
+}
+
+std::size_t count_cubes(const auto &grid) {
+  constexpr bool dimension_ge_2 = requires { grid[0][0]; };
+  constexpr bool dimension_ge_3 = requires { grid[0][0][0]; };
+  if constexpr (dimension_ge_2) {
+    std::size_t result = 0;
+    for (std::size_t i = 1; i != std::size(grid) - 1; ++i) {
+      int fudge = (!dimension_ge_3 || i == 1) ? 1 : 2;
+      result += fudge * count_cubes(grid[i]);
+    }
+    return result;
+  } else {
+    return std::count(std::begin(grid), std::end(grid), '#');
   }
 }
 
@@ -120,9 +148,7 @@ template <std::size_t Part> void part(std::istream &&stream) {
   }
 
   // count nonempty cells
-  for_subscripts(grid, [&result](const auto &grid, auto... i) {
-    result += subscript(grid, i...) == '#';
-  });
+  result = count_cubes(grid);
 
   if (test) {
     if (result != expected) {
@@ -150,7 +176,8 @@ int main() {
     part<3>(std::ifstream(filename));
     part<4>(std::ifstream(filename));
     part<5>(std::ifstream(filename));
-    // part<6>(std::ifstream(filename));
+    part<6>(std::ifstream(filename)); // ~24 GB and ~11 minutes
+    part<7>(std::ifstream(filename)); // don't bother
   }
 
   return 0;
