@@ -24,20 +24,6 @@ template <std::size_t Dimensions> auto make_grid(const auto &plane) {
   }
 }
 
-std::size_t nearby(const auto &grid, bool offcentre, std::size_t i, auto... j) {
-  std::size_t count = 0;
-  if (i != 0 && i != std::size(grid) - 1) {
-    for (std::size_t ii = 0; ii != 3; ++ii) {
-      if constexpr (sizeof...(j) != 0) {
-        count += nearby(grid[i + ii - 1], offcentre || ii != 1, j...);
-      } else {
-        count += (offcentre || ii != 1) && grid[i + ii - 1] == '#';
-      }
-    }
-  }
-  return count;
-}
-
 auto &subscript(auto &atom) { return atom; }
 auto &subscript(auto &sequence, std::size_t i, auto... j) {
   return subscript(sequence[i], j...);
