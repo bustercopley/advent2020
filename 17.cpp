@@ -153,10 +153,7 @@ template <std::size_t Part> void part(std::istream &&stream) {
   for (std::size_t i = 0; i != iterations; ++i) {
     step(grid, counts);
     if constexpr (verbose) {
-      result = 0;
-      for_subscripts(grid, [&result](const auto &grid, auto... i) {
-        result += subscript(grid, i...) == '#';
-      });
+      result = count_cubes(grid);
       std::cout << "Elapsed " << timer.stamp() << ", iteration " << i
                 << ", cubes " << result << std::endl;
     }
