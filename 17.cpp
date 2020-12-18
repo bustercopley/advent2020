@@ -1,4 +1,5 @@
 #include "precompiled.h"
+#include "stopwatch.h"
 
 auto regex = re::regex(R"(^(\d+),(\d+)$)");
 
@@ -139,16 +140,32 @@ template <std::size_t Part> void part(std::istream &&stream) {
     }
   }
 
+  stopwatch timer;
+  constexpr bool verbose = true;
+  if constexpr (verbose) {
+    std::cout << "Dimension " << Part + 2 << ", reset timer" << std::endl;
+  }
   std::size_t iterations = 6;
   auto grid = make_grid<Part>(plane);
   inflate(grid, iterations + 1);
   auto counts = zeroes(grid);
+  std::cout << "Elapsed " << timer.stamp() << ", allocation done" << std::endl;
   for (std::size_t i = 0; i != iterations; ++i) {
     step(grid, counts);
+    if constexpr (verbose) {
+      result = 0;
+      for_subscripts(grid, [&result](const auto &grid, auto... i) {
+        result += subscript(grid, i...) == '#';
+      });
+      std::cout << "Elapsed " << timer.stamp() << ", iteration " << i
+                << ", cubes " << result << std::endl;
+    }
   }
 
   // count nonempty cells
-  result = count_cubes(grid);
+  if constexpr (!verbose) {
+    result = count_cubes(grid);
+  }
 
   if (test) {
     if (result != expected) {
@@ -176,8 +193,8 @@ int main() {
     part<3>(std::ifstream(filename));
     part<4>(std::ifstream(filename));
     part<5>(std::ifstream(filename));
-    part<6>(std::ifstream(filename)); // ~24 GB and ~11 minutes
-    part<7>(std::ifstream(filename)); // don't bother
+    part<6>(std::ifstream(filename));
+    part<7>(std::ifstream(filename)); // ~16 GB and ~5 minutes
   }
 
   return 0;
