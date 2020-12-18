@@ -43,7 +43,7 @@ auto zeroes(const auto &grid) {
   if constexpr (requires { grid[0]; }) {
     return std::vector(std::size(grid), zeroes(grid[0]));
   } else {
-    return 0;
+    return (std::uint8_t)0;
   }
 }
 
