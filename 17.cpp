@@ -62,7 +62,7 @@ void count_neighbours(auto &grid, auto &counts) {
     }
     auto &last = counts[std::size(counts) - 1];
     const auto &first = counts[0];
-    for_subscripts(last, [first](auto &last, auto... i) {
+    for_subscripts(last, [&first](auto &last, auto... i) {
       subscript(last, i...) = subscript(first, i...);
     });
   } else {
