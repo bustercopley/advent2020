@@ -41,7 +41,7 @@ CONFIGS=debug release
 pch_NAME=precompiled.h
 
 # Top-level targets.
-all: $(CONFIG)
+all: $(CONFIG)-all
 test: get-input $(CONFIG)-test
 debug: $(CONFIG)-debug
 clean: ; $(call RM-RF,.obj)
@@ -103,13 +103,13 @@ pch_cppflags=$(pch_NAME:%=-include $(objdir)/%)
 define config-defs
 
 # Top-level targets (advanced).
-$(config): $(objdir)/$(filename)
+$(config)-all: $(objdir)/$(filename)
 
 $(config)-test: $(objdir)/$(filename)
 	"$$<" $(ARGS)
 
 $(config)-debug: $(objdir)/$(filename)
-	gdb --quiet --batch $(DEBUGGER_ARGS) -ex quit --args $(objdir)/$(filename) $(ARGS)
+	gdb --quiet --batch $(DEBUGGER_ARGS) -ex quit --args "$$<" $(ARGS)
 
 all-configs: $(config)
 
