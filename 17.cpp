@@ -1,7 +1,31 @@
 #include "precompiled.h"
 #include "stopwatch.h"
+#include <future>
+#include <thread>
 
 auto regex = re::regex(R"(^(\d+),(\d+)$)");
+
+template <bool Parallel = false> struct executor {};
+
+template <> struct executor<true> {
+  template <typename F> void operator()(F &&f) {
+    threads.emplace_back(std::forward<F>(f));
+  }
+
+  void join() {
+    for (auto &thread : threads) {
+      thread.join();
+    }
+    threads.clear();
+  }
+
+  std::vector<std::thread> threads;
+};
+
+template <> struct executor<false> {
+  template <typename F> void operator()(F &&f) { f(); }
+  void join() {}
+};
 
 void inflate(auto &grid, std::size_t size) {
   constexpr bool dimension_ge_2 = requires { grid[0][0]; };
@@ -40,11 +64,21 @@ auto &subscript(auto &sequence, std::size_t i, auto... j) {
 
 // call 'f(grid, i...)' for each atom 'subscript(grid, i...)' in the
 // multidimensional sequence 'grid'
-template <typename F> void for_subscripts(auto &grid, F &&f, auto... i) {
+template <bool Parallel = false, typename F>
+void for_subscripts(auto &grid, F &&f, auto... i) {
+  static_assert(!Parallel || sizeof...(i) == 0);
   if constexpr (requires { subscript(grid, i...)[0]; }) {
     std::size_t size = std::size(subscript(grid, i...));
-    for (std::size_t j = 0; j != size; ++j) {
-      for_subscripts(grid, std::forward<F>(f), i..., j);
+    if constexpr (Parallel) {
+      executor<true> exec;
+      for (std::size_t j = 0; j != size; ++j) {
+        exec([&grid, &f, j] { for_subscripts(grid, std::forward<F>(f), j); });
+      }
+      exec.join();
+    } else {
+      for (std::size_t j = 0; j != size; ++j) {
+        for_subscripts(grid, std::forward<F>(f), i..., j);
+      }
     }
   } else {
     f(grid, i...);
@@ -64,28 +98,39 @@ auto make_zeros(const auto &grid) {
 // for each atom in 'grid', set the corresponding element of 'counts' to the
 // number of adjacent atoms in 'grid' equal to '#'; neighbours in layer 2 of
 // atoms in layer 1 count double in dimensions 3 and greater
+template <bool Parallel = false>
 void count_neighbours(const auto &grid, auto &counts) {
   constexpr bool dimension_ge_2 = requires { grid[0][0]; };
   constexpr bool dimension_ge_3 = requires { grid[0][0][0]; };
+
   if constexpr (dimension_ge_2) {
+    executor<Parallel> exec;
     // zero out layer 1 of counts
-    for_subscripts(
-      counts[1], [](auto &layer, auto... i) { subscript(layer, i...) = 0; });
+    exec([&c = counts[1]]() {
+      for_subscripts(
+        c, [](auto &layer, auto... j) { subscript(layer, j...) = 0; });
+    });
+
     // overwrite layers 2... with counts for layers 1... in the lower dimension
     for (std::size_t i = 1; i != std::size(grid) - 1; ++i) {
-      count_neighbours(grid[i], counts[i + 1]);
+      exec([&g = grid[i], &c = counts[i + 1]]() {
+        count_neighbours(g, c);
+      });
     }
+    exec.join();
     // combine layers to get the counts for this dimension (in correct layer)
+    // don't parallelize this loop...
     for (std::size_t i = 1; i != std::size(grid) - 1; ++i) {
       int multiplier = (dimension_ge_3 && i == 1) ? 2 : 1;
       if (i + 2 == std::size(grid)) {
         multiplier = 0; // because there is no counts[i + 2]
       }
-      for_subscripts(counts[i], [multiplier](auto &layer, auto... i) {
-        auto & cell = subscript(layer, i...);
-        cell += subscript((&layer)[1], i...);
+      // ...parallelize this one instead
+      for_subscripts<Parallel>(counts[i], [multiplier](auto &layer, auto... j) {
+        auto &cell = subscript(layer, j...);
+        cell += subscript((&layer)[1], j...);
         if (multiplier) {
-          cell += multiplier * subscript((&layer)[2], i...);
+          cell += multiplier * subscript((&layer)[2], j...);
         }
       });
     }
@@ -99,14 +144,26 @@ void count_neighbours(const auto &grid, auto &counts) {
 
 // count atoms in 'grid' equal to '#'; atoms not in layer 1 count double in
 // dimensions 3 and greater
-std::size_t count_cubes(const auto &grid) {
+template <bool Parallel = false> std::size_t count_cubes(const auto &grid) {
   constexpr bool dimension_ge_2 = requires { grid[0][0]; };
   constexpr bool dimension_ge_3 = requires { grid[0][0][0]; };
   if constexpr (dimension_ge_2) {
     std::size_t result = 0;
-    for (std::size_t i = 1; i != std::size(grid) - 1; ++i) {
-      int multiplier = (!dimension_ge_3 || i == 1) ? 1 : 2;
-      result += multiplier * count_cubes(grid[i]);
+    if constexpr (Parallel && dimension_ge_3) {
+      std::vector<std::future<std::size_t>> futures;
+      for (std::size_t i = 1; i != std::size(grid) - 1; ++i) {
+        futures.push_back(
+          std::async([&g = grid[i]]() { return count_cubes(g); }));
+      }
+      for (std::size_t multiplier = 1; auto &future : futures) {
+        result += multiplier * future.get();
+        multiplier = 2;
+      }
+    } else {
+      for (std::size_t i = 1; i != std::size(grid) - 1; ++i) {
+        int multiplier = (!dimension_ge_3 || i == 1) ? 1 : 2;
+        result += multiplier * count_cubes(grid[i]);
+      }
     }
     return result;
   } else {
@@ -116,7 +173,7 @@ std::size_t count_cubes(const auto &grid) {
 
 // apply the rules of life and death to each atom of 'grid'
 void step(auto &grid, auto &counts) {
-  count_neighbours(grid, counts);
+  count_neighbours<true>(grid, counts);
   for_subscripts(grid, [&counts](auto &grid, auto... i) {
     auto &cell = subscript(grid, i...);
     auto count = subscript(counts, i...);
@@ -166,7 +223,7 @@ template <std::size_t Part> void part(std::istream &&stream) {
   for (std::size_t i = 0; i != iterations; ++i) {
     step(grid, counts);
     if constexpr (verbose) {
-      result = count_cubes(grid);
+      result = count_cubes<true>(grid);
       std::cout << "Elapsed " << timer.stamp() << ", iteration " << i
                 << ", cubes " << result << std::endl;
     }
@@ -174,7 +231,7 @@ template <std::size_t Part> void part(std::istream &&stream) {
 
   // count nonempty cells
   if constexpr (!verbose) {
-    result = count_cubes(grid);
+    result = count_cubes<true>(grid);
   }
 
   if (test) {
@@ -194,17 +251,18 @@ int main() {
   }
 
   std::cout << "Day 17, Part Two" << std::endl;
-  for (auto filename : {"test/17", "input/17"}) {
+  for (auto filename : {"test", "input/17"}) {
     part<2>(std::ifstream(filename));
   }
 
   std::cout << "Day 17, Upping the Ante" << std::endl;
-  for (auto filename : {"test/17"}) {
-    part<3>(std::ifstream(filename));
-    part<4>(std::ifstream(filename));
-    part<5>(std::ifstream(filename));
+  for (auto filename : {"input/17"}) {
+    part<3>(std::ifstream(filename)); // 5 dimensions
+    part<4>(std::ifstream(filename)); // 6 dimensions
+    part<5>(std::ifstream(filename)); // ...
     part<6>(std::ifstream(filename));
-    part<7>(std::ifstream(filename)); // ~16 GB and ~5 minutes
+    //part<7>(std::ifstream(filename)); // if you have ~16 GB
+    //part<8>(std::ifstream(filename)); // if you have ~128 GB and ~45 minutes
   }
 
   return 0;
