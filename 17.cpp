@@ -89,9 +89,6 @@ void count_neighbours(const auto &grid, auto &counts) {
         }
       });
     }
-    // zero out lower dimension's counts in last layer (no longer needed)
-    for_subscripts(counts[std::size(counts) - 1],
-      [](auto &layer, auto... i) { subscript(layer, i...) = 0; });
   } else {
     for (std::size_t i = 1; i != std::size(grid) - 1; ++i) {
       counts[i] =
