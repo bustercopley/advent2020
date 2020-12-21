@@ -1,6 +1,6 @@
 #include "precompiled.h"
-#include "symbols.h"
 #include "split.h"
+#include "symbols.h"
 
 auto regex1 =
   re::regex(R"(^(?:(\d+),([a-z,]+)|([a-z ]+)(?:\(contains ([a-z, ]+)\))?)$)");
@@ -38,12 +38,12 @@ void parts(std::istream &stream) {
         auto in_view = match_view(m, 3, line);
         auto aller_view = match_view(m, 4, line);
         std::set<z> ins;
-        for (auto [in_name]: split(in_view, regex2)) {
+        for (auto [in_name] : split(in_view, regex2)) {
           z in = in_names[std::string(in_name)];
           ins.insert(in);
           ++vivify(occurs, in);
         }
-        for (auto [aller_name]: split(aller_view, regex2)) {
+        for (auto [aller_name] : split(aller_view, regex2)) {
           z aller = aller_names[std::string(aller_name)];
           auto [j, emplaced] = contained_by.try_emplace(aller, ins);
           auto &ingredients_with_allergen = j->second;

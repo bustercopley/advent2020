@@ -4,9 +4,8 @@
 
 struct split_sentinel {};
 
-template <std::size_t N = 1>
-struct split_iterator {
-  split_iterator(std::string_view &subject, const re::code &regex)
+template <std::size_t N = 1> struct split_iterator {
+  split_iterator(std::string_view subject, const re::code &regex)
     : regex(regex), subject(subject), m(match(regex, subject)) {}
 
   bool operator!=(split_sentinel) const { return static_cast<bool>(m); }
@@ -29,9 +28,8 @@ private:
   re::match_data m;
 };
 
-template <std::size_t N = 1>
-struct split {
-  split(std::string_view &subject, const re::code &regex)
+template <std::size_t N = 1> struct split {
+  split(std::string_view subject, const re::code &regex)
     : regex(regex), subject(subject) {}
 
   split_iterator<N> begin() { return split_iterator<N>(subject, regex); }

@@ -1,4 +1,5 @@
 #include "precompiled.h"
+#include "split.h"
 
 auto regex1 = re::regex(R"(^([^:]+)(?::(\d+),(\d+))?$)");
 auto regex2 = re::regex(R"(^(\d+)(?:,|$)(.*)$)");
@@ -16,11 +17,9 @@ void parts(std::istream &stream, int part) {
       if (test) {
         expected = string_to<int>(match_view(m, part == 1 ? 2 : 3, line));
       }
-      auto rest = match_view(m, 1, line);
-      while (auto m = match(regex2, rest)) {
+      for (auto [sv] : split(match_view(m, 1, line), regex2)) {
         times[result] = time++;
-        result = string_to<int>(match_view(m, 1, rest));
-        rest = match_view(m, 2, rest);
+        result = string_to<int>(sv);
       }
       while (time != limit) {
         int previous_result = result;

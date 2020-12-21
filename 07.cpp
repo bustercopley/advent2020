@@ -1,4 +1,5 @@
 #include "precompiled.h"
+#include "split.h"
 #include "symbols.h"
 
 auto regex1 = re::regex(R"(^(?:([^,.0-9]+) bags contain(.*)|(\d+),(\d+))$)");
@@ -18,17 +19,15 @@ void parts(std::istream &stream, int part) {
     if (auto m = re::match(regex1, line)) {
       if (matched(m, 1)) {
         int outer_color = colors[match_string(m, 1)];
-        auto rest_of_line = match_view(m, 2, line);
-        while (auto m = re::match(regex2, rest_of_line)) {
-          auto count = string_to<std::size_t>(match_view(m, 1, rest_of_line));
-          auto inner_color = colors[match_string(m, 2)];
+        for (auto [a, b] : split<2>(match_view(m, 2, line), regex2)) {
+          auto count = string_to<std::size_t>(a);
+          auto inner_color = colors[std::string(b)];
           rules.resize(std::size(colors));
           if (part == 1) {
             rules[inner_color][outer_color] = count;
           } else {
             rules[outer_color][inner_color] = count;
           }
-          rest_of_line = match_view(m, 3, rest_of_line);
         }
       } else {
         test = true;

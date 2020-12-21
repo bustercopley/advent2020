@@ -1,4 +1,5 @@
 #include "precompiled.h"
+#include "split.h"
 #include <functional>
 
 auto regex1 = re::regex(
@@ -58,18 +59,14 @@ void parts(std::istream &stream, int part) {
           rule.c = match_view(m, 4, line)[0];
         } else {
           // got a disjunction of one or more concatenations of rule ids
-          auto rest1 = match_view(m, 5, line);
-          while (auto m = match(regex2, rest1)) {
+          for (auto [terms] : split(match_view(m, 5, line), regex2)) {
             // consume one concatenation of one or more rule ids
             rule.disjunction.emplace_back();
             auto &concatenation = rule.disjunction.back();
-            auto rest2 = match_view(m, 1, rest1);
-            while (auto m = match(regex3, rest2)) {
+            for (auto [term] : split(terms, regex3)) {
               // consume one rule id
-              concatenation.push_back(string_to<int>(match_view(m, 1, rest2)));
-              rest2 = match_view(m, 2, rest2);
+              concatenation.push_back(string_to<int>(term));
             }
-            rest1 = match_view(m, 2, rest1);
           }
         }
       } else {

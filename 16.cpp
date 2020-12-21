@@ -1,10 +1,9 @@
 #include "precompiled.h"
+#include "split.h"
 
 auto regex1 = re::regex(
   R"(^(?:expected: (\d+),(\d+)|([a-z ]+):(?: (\d+)-(\d+) or (\d+)-(\d+))?|\d+(?:,\d+)*)$)");
 auto regex2 = re::regex(R"(^(\d+)(?:,|$)(.*)$)");
-
-using z = std::size_t;
 
 void parts(std::istream &stream, int part) {
   bool test = false;
@@ -41,11 +40,9 @@ void parts(std::istream &stream, int part) {
         }
       } else {
         std::vector<int> ticket;
-        auto rest = std::string_view(line);
-        while (auto m = match(regex2, rest)) {
-          auto value = string_to<int>(match_view(m, 1, rest));
+        for (auto [sv] : split(std::string_view(line), regex2)) {
+          auto value = string_to<int>(sv);
           ticket.push_back(value);
-          rest = match_view(m, 2, rest);
         }
         if (state == 0) {
           ticket.swap(my_ticket);
