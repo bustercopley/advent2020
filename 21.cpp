@@ -1,30 +1,12 @@
 #include "precompiled.h"
 #include "symbols.h"
+#include "split.h"
 
 auto regex1 =
   re::regex(R"(^(?:(\d+),([a-z,]+)|([a-z ]+)(?:\(contains ([a-z, ]+)\))?)$)");
 auto regex2 = re::regex(R"(^([a-z]+)(?:[, ]+|$)(.*)$)");
 
 using z = std::size_t;
-
-struct splitter_sentinel {};
-struct splitter {
-  splitter(const re::code &regex, std::string_view &subject)
-    : regex(regex), subject(subject), m(match(regex, subject)) {}
-
-  bool operator!=(splitter_sentinel) const { return static_cast<bool>(m); }
-  std::string_view operator*() const { return match_view(m, 1, subject); }
-  splitter &operator++() {
-    subject = match_view(m, 2, subject);
-    m = match(regex, subject);
-    return *this;
-  }
-
-private:
-  const re::code &regex;
-  std::string_view &subject;
-  re::match_data m;
-};
 
 auto &vivify(auto &vector, z index) {
   if (std::size(vector) < index + 1) {
@@ -56,14 +38,13 @@ void parts(std::istream &stream) {
         auto in_view = match_view(m, 3, line);
         auto aller_view = match_view(m, 4, line);
         std::set<z> ins;
-        splitter_sentinel end;
-        for (splitter iter(regex2, in_view); iter != end; ++iter) {
-          z in = in_names[std::string(*iter)];
+        for (auto [in_name]: split(in_view, regex2)) {
+          z in = in_names[std::string(in_name)];
           ins.insert(in);
           ++vivify(occurs, in);
         }
-        for (splitter iter(regex2, aller_view); iter != end; ++iter) {
-          z aller = aller_names[std::string(*iter)];
+        for (auto [aller_name]: split(aller_view, regex2)) {
+          z aller = aller_names[std::string(aller_name)];
           auto [j, emplaced] = contained_by.try_emplace(aller, ins);
           auto &ingredients_with_allergen = j->second;
           if (!emplaced) {
