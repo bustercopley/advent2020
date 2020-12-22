@@ -38,8 +38,7 @@ std::tuple<bool, int, int> find_tile(
       std::find(std::begin(other_tile_edges), std::end(other_tile_edges), edge);
     int other_edge_index = other_edge_iter - std::begin(other_tile_edges);
     return {true, other_tile_id, other_edge_index};
-  }
-  else {
+  } else {
     return {false, 0, 0};
   }
 }
@@ -79,7 +78,7 @@ void parts(std::istream &stream) {
         }};
         for (auto e : tile_edges) {
           auto &[size, data] = edges[e];
-           data[size++] = id;
+          data[size++] = id;
         }
       }
     }
