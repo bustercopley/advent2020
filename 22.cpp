@@ -1,10 +1,8 @@
 #include "precompiled.h"
-#include "split.h"
-#include "symbols.h"
 
 auto regex1 = re::regex(R"(^(?:(\d+),(\d+)|Player \d:|(\d+))$)");
 
-using z = std::size_t;
+using z = std::uint16_t;
 
 void parts(std::istream &stream) {
   bool test = false;
@@ -109,8 +107,7 @@ void parts(std::istream &stream) {
     if (iter != std::end(history)) {
       if constexpr (verbose) {
         if (test) {
-          std::cout << "Duplicate hands detected (from round "
-                    << (iter - std::begin(history)) << ")" << std::endl;
+          std::cout << "Duplicate hand detected!" << std::endl;
         }
       }
       hands[1].clear();
@@ -144,8 +141,10 @@ void parts(std::istream &stream) {
           }
         }
         stack.emplace_back(hands, history, round, current_game);
-        hands[0].erase(std::begin(hands[0]) + hands[0][0] + 1, std::end(hands[0]));
-        hands[1].erase(std::begin(hands[1]) + hands[1][0] + 1, std::end(hands[1]));
+        hands[0].erase(
+          std::begin(hands[0]) + hands[0][0] + 1, std::end(hands[0]));
+        hands[1].erase(
+          std::begin(hands[1]) + hands[1][0] + 1, std::end(hands[1]));
         hands[0].erase(std::begin(hands[0]));
         hands[1].erase(std::begin(hands[1]));
         history.clear();

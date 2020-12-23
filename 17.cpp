@@ -113,9 +113,7 @@ void count_neighbours(const auto &grid, auto &counts) {
 
     // overwrite layers 2... with counts for layers 1... in the lower dimension
     for (std::size_t i = 1; i != std::size(grid) - 1; ++i) {
-      exec([&g = grid[i], &c = counts[i + 1]]() {
-        count_neighbours(g, c);
-      });
+      exec([&g = grid[i], &c = counts[i + 1]]() { count_neighbours(g, c); });
     }
     exec.join();
     // combine layers to get the counts for this dimension (in correct layer)
@@ -261,8 +259,8 @@ int main() {
     part<4>(std::ifstream(filename)); // 6 dimensions
     part<5>(std::ifstream(filename)); // ...
     part<6>(std::ifstream(filename));
-    //part<7>(std::ifstream(filename)); // if you have ~16 GB
-    //part<8>(std::ifstream(filename)); // if you have ~128 GB and ~45 minutes
+    // part<7>(std::ifstream(filename)); // if you have ~16 GB
+    // part<8>(std::ifstream(filename)); // if you have ~128 GB and ~45 minutes
   }
 
   return 0;

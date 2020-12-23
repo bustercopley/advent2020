@@ -75,7 +75,7 @@ void parts(std::istream &stream, int part) {
           result += greedy_match(s, rules, 0) && std::empty(s);
         } else {
           // Rule "8: 42 | 42 8" matches 42{n} if n >= 1
-          // Rule "11: 42 32 | 42 11 31" matches 42{n} 31{n} if n >= 1
+          // Rule "11: 42 31 | 42 11 31" matches 42{n} 31{n} if n >= 1
           // Rule "0: 8 11" matches 42{n} 31{m} if m >= 1 and n >= m + 1
           int n = 0;
           int m = 0;
