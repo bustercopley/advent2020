@@ -56,7 +56,7 @@ void parts(std::istream &stream) {
   // Part One result, count tiles with 'color == true'
   for (const auto &[x, diagonal] : grid) {
     for (const auto &[y, tile] : diagonal) {
-      const auto &[color, neighbors] = tile;
+      auto [color, neighbors] = tile;
       result[0] += color;
     }
   }
@@ -72,9 +72,9 @@ void parts(std::istream &stream) {
       }
     }
     // For each existing tile...
-    for (auto &[x, diagonal] : grid) {
-      for (auto &[y, tile] : diagonal) {
-        auto &[color, neighbors] = tile;
+    for (const auto &[x, diagonal] : grid) {
+      for (const auto &[y, tile] : diagonal) {
+        auto [color, neighbors] = tile;
         if (color) {
           //...increment neighbor count of each neighbor
           for (const auto &[name, direction] : directions) {
