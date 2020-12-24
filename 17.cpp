@@ -204,8 +204,17 @@ template <std::size_t Part> void part(std::istream &&stream, bool enable_time) {
         expected = string_to<std::size_t>(match_view(m, Part, line));
       }
     } else {
+      if (std::empty(line) ||
+          (!std::empty(plane) && std::size(line) != std::size(plane[0]))) {
+        std::cout << "Invalid input format" << std::endl;
+        return;
+      }
       plane.push_back(line);
     }
+  }
+  if (std::empty(plane)) {
+    std::cout << "Invalid input format" << std::endl;
+    return;
   }
 
   stopwatch timer;
@@ -262,14 +271,14 @@ int main(int argc, char *argv[]) {
               higher = true;
             }
           } else {
-	    std::cout << "Argument out of range: " << arg << std::endl;
+            std::cout << "Argument out of range: " << arg << std::endl;
             bad_args = true;
           }
         } else {
           enable_time = true;
         }
       } else {
-	std::cout << "Unrecognised argument: " << arg << std::endl;
+        std::cout << "Unrecognised argument: " << arg << std::endl;
       }
     }
   }
@@ -301,7 +310,7 @@ int main(int argc, char *argv[]) {
 
   if (enabled[1]) {
     std::cout << "Day 17, Part Two" << std::endl;
-    for (auto filename : {"test", "input/17"}) {
+    for (auto filename : {"test/17", "input/17"}) {
       part<2>(std::ifstream(filename), enable_time);
     }
   }
