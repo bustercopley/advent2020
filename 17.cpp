@@ -38,7 +38,7 @@ void inflate(auto &grid, std::size_t size) {
     for (auto &layer : grid) {
       inflate(layer, size);
     }
-    grid.emplace_back(std::size(grid[0]), grid[0][0]);
+    grid.emplace_back(std::size(grid[0]), std::cref(grid[0][0]));
   } else {
     grid.push_back('.');
   }
@@ -246,7 +246,7 @@ int main(int argc, char *argv[]) {
   bool bad_args = false;
   bool higher = false;
   bool enable_time = false;
-  auto regex = re::regex(R"(-(\d+)|-time)");
+  auto regex = re::regex(R"(^-(\d+)|-time$)");
   if (argc <= 1) {
     enabled[0] = true;
     enabled[1] = true;
@@ -262,11 +262,14 @@ int main(int argc, char *argv[]) {
               higher = true;
             }
           } else {
+	    std::cout << "Argument out of range: " << arg << std::endl;
             bad_args = true;
           }
         } else {
           enable_time = true;
         }
+      } else {
+	std::cout << "Unrecognised argument: " << arg << std::endl;
       }
     }
   }
