@@ -80,12 +80,20 @@ int main() {
   }
 
   // Part Two
-  for (auto filename : {"input/23"}) {
+  for (auto filename : {"test/23", "input/23"}) {
     if (std::ifstream stream(filename); stream) {
       for (std::string line; std::getline(stream, line);) {
         if (auto m = match(regex, line)) {
           auto result = part_two(match_view(m, 1, line));
-          std::cout << result << std::endl;
+          if (!matched(m, 2)) {
+            std::cout << result << std::endl;
+          } else {
+            auto expected = string_to<ll>(match_view(m, 3, line));
+            if (result != expected) {
+              std::cout << "Fail, got " << result << ", expected " << expected
+                        << std::endl;
+            }
+          }
         }
       }
     }
