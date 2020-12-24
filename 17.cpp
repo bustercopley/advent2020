@@ -186,7 +186,7 @@ void step(auto &grid, auto &counts) {
   });
 }
 
-template <std::size_t Part> void part(std::istream &&stream) {
+template <std::size_t Part> void part(std::istream &&stream, bool enable_time) {
   if (!stream) {
     return;
   }
@@ -209,28 +209,27 @@ template <std::size_t Part> void part(std::istream &&stream) {
   }
 
   stopwatch timer;
-  constexpr bool verbose = true;
-  if constexpr (verbose) {
+  if (enable_time) {
     std::cout << "Dimension " << Part + 2 << ", reset timer" << std::endl;
   }
   std::size_t iterations = 6;
   auto grid = increase_dimension<Part>(plane);
   inflate(grid, iterations + 1);
   auto counts = make_zeros(grid);
-  std::cout << "Elapsed " << timer.stamp() << ", allocation done" << std::endl;
+  if (enable_time) {
+    std::cout << "Elapsed " << timer.stamp() << ", allocation done"
+              << std::endl;
+  }
   for (std::size_t i = 0; i != iterations; ++i) {
     step(grid, counts);
-    if constexpr (verbose) {
-      result = count_cubes<true>(grid);
+    if (enable_time) {
       std::cout << "Elapsed " << timer.stamp() << ", iteration " << i
-                << ", cubes " << result << std::endl;
+                << std::endl;
     }
   }
 
   // count nonempty cells
-  if constexpr (!verbose) {
-    result = count_cubes<true>(grid);
-  }
+  result = count_cubes<true>(grid);
 
   if (test) {
     if (result != expected) {
@@ -242,25 +241,90 @@ template <std::size_t Part> void part(std::istream &&stream) {
   }
 }
 
-int main() {
-  std::cout << "Day 17, Part One" << std::endl;
-  for (auto filename : {"test/17", "input/17"}) {
-    part<1>(std::ifstream(filename));
+int main(int argc, char *argv[]) {
+  int enabled[9]{};
+  bool bad_args = false;
+  bool higher = false;
+  bool enable_time = false;
+  auto regex = re::regex(R"(-(\d+)|-time)");
+  if (argc <= 1) {
+    enabled[0] = true;
+    enabled[1] = true;
+  } else {
+    for (int i = 1; i != argc; ++i) {
+      std::string arg = argv[i];
+      if (auto m = match(regex, arg)) {
+        if (matched(m, 1)) {
+          auto day = string_to<int>(match_view(m, 1, arg));
+          if (3 <= day && day <= 10) {
+            enabled[day - 3] = true;
+            if (day >= 5) {
+              higher = true;
+            }
+          } else {
+            bad_args = true;
+          }
+        } else {
+          enable_time = true;
+        }
+      }
+    }
   }
 
-  std::cout << "Day 17, Part Two" << std::endl;
-  for (auto filename : {"test", "input/17"}) {
-    part<2>(std::ifstream(filename));
+  if (bad_args) {
+    std::cout << "Usage \"" << argv[0] << " [options...]\"\n"
+              << "Options:\n"
+              << "  -3: run in three dimensions (challenge Part One)\n"
+              << "  -4: run in four dimensions (challenge Part Two)\n"
+              << "  -5: run in five dimensions\n"
+              << "  -6: run in six dimensions\n"
+              << "  -7: run in seven dimensions\n"
+              << "  -8: run in eight dimensions\n"
+              << "  -9: run in nine dimensions (~16 GB)\n"
+              << "  -10: run in ten dimensions (~128 GB)\n"
+              << "  -time: enable progress output and elapsed time\n"
+              << "Default: -3 -4\n"
+              << "WARNING: Dimensions nine and above use a lot of memory."
+              << std::endl;
+    std::exit(1);
   }
 
-  std::cout << "Day 17, Upping the Ante" << std::endl;
-  for (auto filename : {"input/17"}) {
-    part<3>(std::ifstream(filename)); // 5 dimensions
-    part<4>(std::ifstream(filename)); // 6 dimensions
-    part<5>(std::ifstream(filename)); // ...
-    part<6>(std::ifstream(filename));
-    // part<7>(std::ifstream(filename)); // if you have ~16 GB
-    // part<8>(std::ifstream(filename)); // if you have ~128 GB and ~45 minutes
+  if (enabled[0]) {
+    std::cout << "Day 17, Part One" << std::endl;
+    for (auto filename : {"test/17", "input/17"}) {
+      part<1>(std::ifstream(filename), enable_time);
+    }
+  }
+
+  if (enabled[1]) {
+    std::cout << "Day 17, Part Two" << std::endl;
+    for (auto filename : {"test", "input/17"}) {
+      part<2>(std::ifstream(filename), enable_time);
+    }
+  }
+
+  if (higher) {
+    std::cout << "Day 17, Upping the Ante" << std::endl;
+    for (auto filename : {"input/17"}) {
+      if (enabled[2]) {
+        part<3>(std::ifstream(filename), enable_time); // 5 dimensions
+      }
+      if (enabled[3]) {
+        part<4>(std::ifstream(filename), enable_time); // 6 dimensions
+      }
+      if (enabled[4]) {
+        part<5>(std::ifstream(filename), enable_time); // 7 dimensions
+      }
+      if (enabled[5]) {
+        part<6>(std::ifstream(filename), enable_time); // 8 dimensions
+      }
+      if (enabled[6]) {
+        part<7>(std::ifstream(filename), enable_time); // 9 dimensions
+      }
+      if (enabled[7]) {
+        part<8>(std::ifstream(filename), enable_time); // 10 dimensions
+      }
+    }
   }
 
   return 0;
