@@ -4,56 +4,56 @@
 
 using ll = std::int64_t;
 
-void permute(std::vector<int> &list, int current, int iterations) {
-  int size = std::size(list);
+void permute(std::vector<int> &permutation, int current, int iterations) {
+  int size = std::size(permutation);
   // Do the dance
   for (int i = 0; i != iterations; ++i) {
-    int a = list[current];
-    int b = list[a];
-    int c = list[b];
+    int a = permutation[current];
+    int b = permutation[a];
+    int c = permutation[b];
     // Find destination
     int destination = current;
     do {
       destination = (destination + (size - 1)) % size;
     } while (destination == a || destination == b || destination == c);
     // Move picked cups to after destination
-    int t = list[destination];
-    list[destination] = list[current];
-    list[current] = list[c];
-    list[c] = t;
+    int t = permutation[destination];
+    permutation[destination] = permutation[current];
+    permutation[current] = permutation[c];
+    permutation[c] = t;
     // Move head to new current cup
-    current = list[current];
+    current = permutation[current];
   }
 }
 
 std::string part_one(auto &&input) {
-  std::vector<int> list(9);
+  std::vector<int> permutation(9);
   int index = input[8] - '1';
   for (char c : input) {
-    index = list[index] = c - '1';
+    index = permutation[index] = c - '1';
   }
-  permute(list, input[0] - '1', 100);
+  permute(permutation, input[0] - '1', 100);
   std::string result(8, '\0');
   index = 0;
   for (int pos = 0; pos != 8; ++pos) {
-    index = list[index];
+    index = permutation[index];
     result[pos] = '1' + index;
   }
   return result;
 }
 
 ll part_two(auto &&input) {
-  std::vector<int> list(1'000'000);
+  std::vector<int> permutation(1'000'000);
   int index = 999'999;
   for (char c : input) {
-    index = list[index] = c - '1';
+    index = permutation[index] = c - '1';
   }
   for (int i = 9; i != 1'000'000; ++i) {
-    index = list[index] = i;
+    index = permutation[index] = i;
   }
-  permute(list, input[0] - '1', 10'000'000);
-  int a = list[0];
-  int b = list[a];
+  permute(permutation, input[0] - '1', 10'000'000);
+  int a = permutation[0];
+  int b = permutation[a];
   return (ll)(a + 1) * (ll)(b + 1);
 }
 
