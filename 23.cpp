@@ -1,61 +1,60 @@
 #include "precompiled.h"
 #include "split.h"
-#include "stopwatch.h"
 #include <list>
 
-using z = std::size_t;
 using ll = std::int64_t;
-constexpr bool verbose = false;
 
-using z = std::size_t;
-
-void permute(std::list<int> &list, z size, z iterations) {
-  stopwatch timer;
-  // Build list index (map content to iterator)
-  std::vector<std::list<int>::const_iterator> index(size);
-  for (auto iter = std::begin(list); iter != std::end(list); ++iter) {
-    index[*iter - 1] = iter;
-  }
+void permute(std::vector<int> &list, int current, int iterations) {
+  int size = std::size(list);
   // Do the dance
-  for (z i = 0; i != iterations; ++i) {
-    auto pick_begin = std::next(std::begin(list));
-    auto pick_end = std::next(pick_begin, 3);
+  for (int i = 0; i != iterations; ++i) {
+    int a = list[current];
+    int b = list[a];
+    int c = list[b];
     // Find destination
-    int dest = list.front();
+    int destination = current;
     do {
-      dest = 1 + (dest + (size - 2)) % size;
-    } while (std::find(pick_begin, pick_end, dest) != pick_end);
-    auto dest_iter = index[dest - 1];
+      destination = (destination + (size - 1)) % size;
+    } while (destination == a || destination == b || destination == c);
     // Move picked cups to after destination
-    list.splice(std::next(dest_iter), list, pick_begin, pick_end);
-    // Move new current cup to front
-    list.splice(std::begin(list), list, std::next(std::begin(list)), std::end(list));
+    int t = list[destination];
+    list[destination] = list[current];
+    list[current] = list[c];
+    list[c] = t;
+    // Move head to new current cup
+    current = list[current];
   }
-  // Move 1 to back
-  list.splice(std::begin(list), list, std::next(index[0]), std::end(list));
-  std::cout << "Permutation done, " << timer.stamp() << std::endl;
 }
 
 std::string part_one(auto &&input) {
-  std::list<int> list;
-  std::ranges::transform(input, std::back_insert_iterator(list),
-    [](char c) -> int { return c - '0'; });
-  permute(list, 9, 100);
-  std::string result;
-  std::ranges::transform(list | std::ranges::views::take(8),
-    std::back_insert_iterator(result), [](char c) -> int { return '0' + c; });
-  return std::string(result);
+  std::vector<int> list(9);
+  int index = input[8] - '1';
+  for (char c : input) {
+    index = list[index] = c - '1';
+  }
+  permute(list, input[0] - '1', 100);
+  std::string result(8, '\0');
+  index = 0;
+  for (int pos = 0; pos != 8; ++pos) {
+    index = list[index];
+    result[pos] = '1' + index;
+  }
+  return result;
 }
 
 ll part_two(auto &&input) {
-  std::list<int> list;
-  std::ranges::transform(input, std::back_insert_iterator(list),
-    [](char c) -> int { return c - '0'; });
-  for (int i = 10; i != 1'000'001; ++i) {
-    list.push_back(i);
+  std::vector<int> list(1'000'000);
+  int index = 999'999;
+  for (char c : input) {
+    index = list[index] = c - '1';
   }
-  permute(list, 1'000'000, 10'000'000);
-  return (ll)(*std::begin(list)) * (ll)(*std::next(std::begin(list)));
+  for (int i = 9; i != 1'000'000; ++i) {
+    index = list[index] = i;
+  }
+  permute(list, input[0] - '1', 10'000'000);
+  int a = list[0];
+  int b = list[a];
+  return (ll)(a + 1) * (ll)(b + 1);
 }
 
 int main() {
