@@ -39,12 +39,13 @@ void parts(std::istream &stream, int part) {
 }
 
 int main() {
-  std::cout << "Day 13, Part One" << std::endl;
+  std::cout << "Day 15, Part One" << std::endl;
   for (auto filename : {"test/15", "input/15"}) {
     if (std::ifstream stream(filename); stream) {
       parts(stream, 1);
     }
   }
+  std::cout << "Day 15, Part Two" << std::endl;
   for (auto filename : {"test/15", "input/15"}) {
     if (std::ifstream stream(filename); stream) {
       parts(stream, 2);
