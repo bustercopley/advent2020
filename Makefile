@@ -29,6 +29,7 @@ RM-RF=2>NUL rd /s /q $(1)
 EXEEXT=.exe
 else
 RM-RF=rm -rf $(1)
+PTHREAD=-pthread
 endif
 
 # Default config.
@@ -61,7 +62,7 @@ input/%: | input ; bash get-input.sh $*
 SRCDIR=.
 WARNFLAGS=-Wall -Wextra -Werror
 CPPFLAGS=$(PACKAGE_CPPFLAGS)
-CFLAGS=-ggdb3 $(PACKAGE_CFLAGS) $(WARNFLAGS)
+CFLAGS=-ggdb3 $(PTHREAD) $(PACKAGE_CFLAGS) $(WARNFLAGS)
 CXXFLAGS=-std=c++2a
 LDFLAGS=$(PACKAGE_LDFLAGS)
 LDLIBS=$(PACKAGE_LDLIBS) -lpcre2-8
