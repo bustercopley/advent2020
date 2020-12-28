@@ -1,6 +1,5 @@
 #include "precompiled.h"
-#include "split.h"
-#include <list>
+#include "large_array.h"
 
 using ll = std::int64_t;
 
@@ -27,15 +26,16 @@ void permute(std::vector<int> &permutation, int current, int iterations) {
 }
 
 std::string part_one(auto &&input) {
-  std::vector<int> permutation(9);
-  int index = input[8] - '1';
+  constexpr int size = 9;
+  auto permutation = std::make_unique<int[]>(9);
+  int index = input[size - 1] - '1';
   for (char c : input) {
     index = permutation[index] = c - '1';
   }
-  permute(permutation, input[0] - '1', 100);
-  std::string result(8, '\0');
+  permute(permutation.get(), size, input[0] - '1', 100);
+  std::string result(size - 1, '\0');
   index = 0;
-  for (int pos = 0; pos != 8; ++pos) {
+  for (int pos = 0; pos != size - 1; ++pos) {
     index = permutation[index];
     result[pos] = '1' + index;
   }
@@ -43,15 +43,16 @@ std::string part_one(auto &&input) {
 }
 
 ll part_two(auto &&input) {
-  std::vector<int> permutation(1'000'000);
-  int index = 999'999;
+  constexpr int size = 1'000'000;
+  auto permutation = allocate_large_array<int>(size);
+  int index = size - 1;
   for (char c : input) {
     index = permutation[index] = c - '1';
   }
-  for (int i = 9; i != 1'000'000; ++i) {
+  for (int i = 9; i != size; ++i) {
     index = permutation[index] = i;
   }
-  permute(permutation, input[0] - '1', 10'000'000);
+  permute(permutation.get(), size, input[0] - '1', 10'000'000);
   int a = permutation[0];
   int b = permutation[a];
   return (ll)(a + 1) * (ll)(b + 1);
