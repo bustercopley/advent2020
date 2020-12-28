@@ -60,7 +60,7 @@ void parts(std::istream &stream) {
                 intersect.insert(i);
               }
             }
-            ingredients_with_allergen = std::move(intersect);
+            ingredients_containing_allergen = std::move(intersect);
           }
         }
       }
