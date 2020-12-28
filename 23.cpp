@@ -3,25 +3,25 @@
 
 using ll = std::int64_t;
 
-void permute(std::vector<int> &permutation, int current, int iterations) {
-  int size = std::size(permutation);
+void permute(int *permutation, int size, int current, int iterations) {
   // Do the dance
   for (int i = 0; i != iterations; ++i) {
+    // Pick up cups
     int a = permutation[current];
     int b = permutation[a];
     int c = permutation[b];
     // Find destination
     int destination = current;
     do {
-      destination = (destination + (size - 1)) % size;
+      if (!destination) {
+        destination = size;
+      }
+      --destination;
     } while (destination == a || destination == b || destination == c);
-    // Move picked cups to after destination
-    int t = permutation[destination];
-    permutation[destination] = permutation[current];
-    permutation[current] = permutation[c];
-    permutation[c] = t;
-    // Move head to new current cup
-    current = permutation[current];
+    // Splice picked cups after destination and move head to new current cup
+    current = permutation[current] = permutation[c];
+    permutation[c] = permutation[destination];
+    permutation[destination] = a;
   }
 }
 
